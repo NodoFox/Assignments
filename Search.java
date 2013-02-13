@@ -2,7 +2,6 @@ import java.util.*;
 import java.io.*;
 
 public class Search{
-
     private final Integer ROWS=10;
     private final Integer COLUMNS=7;
     private Node[][] graph = new Node[ROWS][COLUMNS];
@@ -18,7 +17,7 @@ public class Search{
               {0,15,12,16,9,12,0},
               {0,0,0,0,0,0,0}};
 
-    // NODE CLASS REPRESENTING EACH NODE IN THE GRAPH
+    // NODE CLASS REPRESENTING FOR EACH NODE IN THE GRAPH (INNER CLASS)
     public class Node{
         private  Integer x;
         private  Integer y;
@@ -84,8 +83,8 @@ public class Search{
         }
         @Override
         public String toString(){
-            return data+"("+x+","+y+")"+flag+","+addFlag;
-        }        
+            return "("+y+","+x+")";
+        }
         @Override
         public boolean equals(Object o){
             if(o instanceof Node){
@@ -95,6 +94,7 @@ public class Search{
             return false;
         }
     }
+
     // OVER_RIDDEN COMPARATOR FOR TREESET
     public class MyDataComparator implements Comparator<Node>{
         Node[][] tiedGraph;
@@ -105,31 +105,23 @@ public class Search{
 
         public int compare(Node a, Node b){
             if(a.data > b.data)
-                return 1;            
+                return 1;
             else
                 return -1;
         }
     }
     // OVER_RIDDEN COMPARATOR FOR SORTING
     public class MyCostComparator implements Comparator<Node>{
-        
+
         public int compare(Node a, Node b){
             if(a.pathCost >= b.pathCost)
-                return 1;            
+                return 1;
             else
                 return -1;
         }
     }
 
-    // RESETTING THE GRAPH VISITED FLAGS
-    public void refreshFlags(Node[][] generic){
-        for(Node[] outer: generic)
-            for(Node each: outer){
-                each.resetFlags();
-            }         
-    }
-
-    // BUILDING THE WHOLE GRAPH AND ADJ. LIST
+   // BUILDING THE WHOLE GRAPH AND ADJ. LIST
     public void buildGraph(){
         MyDataComparator comp = new MyDataComparator(graph);
         //Creating all nodes
@@ -155,6 +147,13 @@ public class Search{
                 bfsGraph[i][j].setNeighbor(linkedHash);
             }
     }
+    // RESETTING THE GRAPH VISITED FLAGS
+    public void refreshFlags(Node[][] generic){
+        for(Node[] outer: generic)
+            for(Node each: outer){
+                each.resetFlags();
+            }
+    }
 
     // BREADTH FIRST SEARCH
     public void bfs(int x1, int y1, int x2, int y2){
@@ -169,32 +168,30 @@ public class Search{
         while(q!=null){
             Node temp = q.remove();
             s=temp.getNeighbors();
-            //System.out.print(s);
             for(Node each:s){
                 if(each.getFlag()==false && each.getAddFlag()==false){
                     q.add(each);
                     path[each.getX()][each.getY()]=path[temp.getX()][temp.getY()]
                             +","+"("+each.getY()+","+each.getX()+")";
                     each.setAddFlag();
-                }                
+                }
             }
             temp.setFlag();
-            System.out.print("("+temp.getY()+","+temp.getX()+")");
-            //System.out.println(temp+"\n");
+            System.out.print(temp);
             if(temp.getX()==x2 && temp.getY()==y2) break;
             System.out.print(",");
         }
         System.out.print("\nStitching Curve\n");
         System.out.print(path[x2][y2]+"\n\n");
     }
-    
+
     // UNIFORM COST SEARCH
     public void ucs(int x1, int y1, int x2, int y2){
         MyCostComparator newComp = new MyCostComparator();
         Set<Node> set;
         Node temp = graph[x1][y1];
         temp.setPathCost(temp.getData());
-        LinkedList<Node> l = new LinkedList<Node>();       
+        LinkedList<Node> l = new LinkedList<Node>();
         l.add(graph[x1][y1]);
         String[][] path = new String[ROWS][COLUMNS];
         System.out.print("\nTraversal Path\n");
@@ -203,25 +200,26 @@ public class Search{
             temp = l.pollFirst();
             set = temp.getNeighbors();
             for(Node each:set){
-                if(each.getFlag()==false && (temp.getPathCost()+each.getData()) 
-                    < (each.getPathCost())){ 
+                if(each.getFlag()==false && (temp.getPathCost()+each.getData())
+                    < (each.getPathCost())){
                     l.remove(new Node(each.getX(),each.getY(),0));
                     each.setPathCost(temp.getPathCost()+each.getData());
                     l.add(each);
                     path[each.getX()][each.getY()]=path[temp.getX()][temp.getY()]
-                            +","+"("+each.getY()+","+each.getX()+")";                                     
-                }                
+                            +","+"("+each.getY()+","+each.getX()+")";
+                }
             }
             Collections.sort(l,newComp);
             temp.setFlag();
-            System.out.print("("+temp.getY()+","+temp.getX()+")");
+            System.out.print(temp);
             //System.out.println(temp+"\n");
             if(temp.getX()==x2 && temp.getY()==y2) break;
+            System.out.print(",");
         }
         System.out.print("\nStitching Curve\n");
         System.out.print(path[x2][y2]+"\n\n");
     }
-    
+
     // DEPTH FIRST SEARCH
     public void dfs(int x1, int y1, int x2, int y2){
         Stack<Node> s = new Stack<Node>();
@@ -246,7 +244,7 @@ public class Search{
                else{
                     each.setFlag();
                     s.push(each);
-                    System.out.print(",("+each.getY()+","+each.getX()+")");
+                    System.out.print(","+temp);
                     path[each.getX()][each.getY()]=path[temp.getX()][temp.getY()]
                             +","+"("+each.getY()+","+each.getX()+")";
                     flag=false;
@@ -260,6 +258,8 @@ public class Search{
         System.out.print("\nStitching curve\n");
         System.out.print(path[x2][y2]+"\n\n");
     }
+
+    //STARTER
     public void go(){
         BufferedReader buffer = new BufferedReader(new InputStreamReader(System.in));
         String str = null;
@@ -267,10 +267,10 @@ public class Search{
         Integer x2 = 8, y2 = 4;
         buildGraph();
         System.out.print("\n");
-        try{        
+        try{
             while(true){
             System.out.print("Enter Choice Number:\n1-(BFS) 2-(DFS) 3-(UCS) 4-"
-                                    +"(EXIT)\n");
+                    +"(EXIT)\n");
                 str = buffer.readLine();
                 switch(str){
                     case "1":System.out.print("BFS");
@@ -286,15 +286,15 @@ public class Search{
                             return;
                     default:
                             System.out.println("Wrong Input, Try Again");
-                            break;                        
+                            break;
                 }
-            }        
+            }
         }
         catch(Exception ex){};
     }
     // MAIN
     public static void main(String[] args){
         Search s = new Search();
-        s.go();        
+        s.go();
     }
 }
