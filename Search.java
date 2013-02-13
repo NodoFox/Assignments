@@ -1,4 +1,5 @@
 import java.util.*;
+import java.io.*;
 
 public class Search{
 
@@ -24,12 +25,17 @@ public class Search{
         private  Integer data;
         private Boolean flag=false;
         private Boolean addFlag=false;
+        private Integer pathCost;
         private Set<Node> neighbors;
 
         public Node(Integer x, Integer y, Integer data){
             this.x = x;
             this.y = y;
             this.data = data;
+            this.pathCost = 1000;
+        }
+        public Node(Integer x, Integer y){
+            this.x = x; this.y = y;
         }
         //SETTERS
         public void setX(Integer x){
@@ -48,10 +54,12 @@ public class Search{
         public void setAddFlag(){
             addFlag=true;
         }
+        public void setPathCost(Integer cost){
+            this.pathCost = cost;
+        }
         public void setNeighbor(Set<Node> neighbors){
             this.neighbors = neighbors;
         }
-
         //GETTERS
         public Integer getX(){
             return x;
@@ -68,21 +76,30 @@ public class Search{
         public Boolean getAddFlag(){
             return addFlag;
         }
+        public Integer getPathCost(){
+            return this.pathCost;
+        }
         public Set<Node> getNeighbors(){
             return neighbors;
         }
-
         @Override
         public String toString(){
             return data+"("+x+","+y+")"+flag+","+addFlag;
+        }        
+        @Override
+        public boolean equals(Object o){
+            if(o instanceof Node){
+                Node c = (Node) o;
+                return (x.equals(c.x) && y.equals(c.y));
+            }
+            return false;
         }
     }
-
     // OVER_RIDDEN COMPARATOR FOR TREESET
-    public class MyComparator implements Comparator<Node>{
+    public class MyDataComparator implements Comparator<Node>{
         Node[][] tiedGraph;
 
-        public MyComparator(Node[][] graph){
+        public MyDataComparator(Node[][] graph){
             this.tiedGraph = graph;
         }
 
@@ -93,19 +110,28 @@ public class Search{
                 return -1;
         }
     }
+    // OVER_RIDDEN COMPARATOR FOR SORTING
+    public class MyCostComparator implements Comparator<Node>{
+        
+        public int compare(Node a, Node b){
+            if(a.pathCost >= b.pathCost)
+                return 1;            
+            else
+                return -1;
+        }
+    }
 
     // RESETTING THE GRAPH VISITED FLAGS
-    public void resetGraph(Node[][] generic){
+    public void refreshFlags(Node[][] generic){
         for(Node[] outer: generic)
             for(Node each: outer){
                 each.resetFlags();
             }         
     }
 
-    // Building the Whole Graph
+    // BUILDING THE WHOLE GRAPH AND ADJ. LIST
     public void buildGraph(){
-        MyComparator comp = new MyComparator(graph);
-
+        MyDataComparator comp = new MyDataComparator(graph);
         //Creating all nodes
         for(int i = 0 ; i<=9; i++)
             for(int j = 0; j<=6; j++){
@@ -136,8 +162,8 @@ public class Search{
         Set<Node> s;
         Boolean reached;
         String[][] path = new String[ROWS][COLUMNS];
-        q.add(graph[x1][y1]);
-        graph[x1][y1].setAddFlag();
+        q.add(bfsGraph[x1][y1]);
+        bfsGraph[x1][y1].setAddFlag();
         path[x1][y1] = "("+y1+","+x1+")";
         System.out.print("\nTraversal Path\n");
         while(q!=null){
@@ -161,22 +187,56 @@ public class Search{
         System.out.print("\nStitching Curve\n");
         System.out.print(path[x2][y2]+"\n\n");
     }
-
+    
+    // UNIFORM COST SEARCH
+    public void ucs(int x1, int y1, int x2, int y2){
+        MyCostComparator newComp = new MyCostComparator();
+        Set<Node> set;
+        Node temp = graph[x1][y1];
+        temp.setPathCost(temp.getData());
+        LinkedList<Node> l = new LinkedList<Node>();       
+        l.add(graph[x1][y1]);
+        String[][] path = new String[ROWS][COLUMNS];
+        System.out.print("\nTraversal Path\n");
+        path[x1][y1] = "("+y1+","+x1+")";
+        while(l!=null){
+            temp = l.pollFirst();
+            set = temp.getNeighbors();
+            for(Node each:set){
+                if(each.getFlag()==false && (temp.getPathCost()+each.getData()) 
+                    < (each.getPathCost())){ 
+                    l.remove(new Node(each.getX(),each.getY(),0));
+                    each.setPathCost(temp.getPathCost()+each.getData());
+                    l.add(each);
+                    path[each.getX()][each.getY()]=path[temp.getX()][temp.getY()]
+                            +","+"("+each.getY()+","+each.getX()+")";                                     
+                }                
+            }
+            Collections.sort(l,newComp);
+            temp.setFlag();
+            System.out.print("("+temp.getY()+","+temp.getX()+")");
+            //System.out.println(temp+"\n");
+            if(temp.getX()==x2 && temp.getY()==y2) break;
+        }
+        System.out.print("\nStitching Curve\n");
+        System.out.print(path[x2][y2]+"\n\n");
+    }
+    
     // DEPTH FIRST SEARCH
     public void dfs(int x1, int y1, int x2, int y2){
         Stack<Node> s = new Stack<Node>();
         Set<Node> set;
         String[][] path = new String[ROWS][COLUMNS];
-        s.push(graph[x1][y1]);
-        graph[x1][y1].setFlag();
+        s.push(bfsGraph[x1][y1]);
+        bfsGraph[x1][y1].setFlag();
         path[x1][y1] = "("+y1+","+x1+")";
-        System.out.print("DFS \nTraversal Path\n");
+        System.out.print("\nTraversal Path\n");
         System.out.print("("+y1+","+x1+")");
         while(s!=null){
             Node temp = s.peek();
             set = temp.getNeighbors();
             Boolean flag=true;
-            if(temp.getX()==8 && temp.getY()==4) break;
+            if(temp.getX()==x2 && temp.getY()==y2) break;
 
             for(Node each: set){
                if(each.getFlag()==true){
@@ -201,22 +261,40 @@ public class Search{
         System.out.print(path[x2][y2]+"\n\n");
     }
     public void go(){
-        
-        System.out.print("\nBFS");
-        bfs(1,2,8,4);
-        resetGraph(bfsGraph);
-        resetGraph(graph);
-        dfs(1,2,8,4);
+        BufferedReader buffer = new BufferedReader(new InputStreamReader(System.in));
+        String str = null;
+        Integer x1 = 1, y1 = 2;
+        Integer x2 = 8, y2 = 4;
+        buildGraph();
+        System.out.print("\n");
+        try{        
+            while(true){
+            System.out.print("Enter Choice Number:\n1-(BFS) 2-(DFS) 3-(UCS) 4-"
+                                    +"(EXIT)\n");
+                str = buffer.readLine();
+                switch(str){
+                    case "1":System.out.print("BFS");
+                            refreshFlags(bfsGraph);
+                            bfs(x1,y1,x2,y2); break;
+                    case "2":System.out.print("DFS");
+                            refreshFlags(bfsGraph);
+                            dfs(x1,y1,x2,y2); break;
+                    case "3":System.out.print("UCS");
+                            refreshFlags(graph);
+                            ucs(x1,y1,x2,y2); break;
+                    case "4":
+                            return;
+                    default:
+                            System.out.println("Wrong Input, Try Again");
+                            break;                        
+                }
+            }        
+        }
+        catch(Exception ex){};
     }
     // MAIN
     public static void main(String[] args){
         Search s = new Search();
-        Integer x1 = 1, y1 = 2;
-        Integer x2 = 8, y2 = 4;
-        s.buildGraph();
-        s.go();
-        System.out.println("");
-        //s.resetGraph();
+        s.go();        
     }
 }
-
