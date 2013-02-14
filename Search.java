@@ -244,7 +244,7 @@ public class Search{
                else{
                     each.setFlag();
                     s.push(each);
-                    System.out.print(","+temp);
+                    System.out.print(","+each);
                     path[each.getX()][each.getY()]=path[temp.getX()][temp.getY()]
                             +","+"("+each.getY()+","+each.getX()+")";
                     flag=false;
