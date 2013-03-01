@@ -1,6 +1,5 @@
 import java.util.*;
 import java.util.List;
-import java.util.Deque;
 public class AStar{
     private final Integer SIZE = 12;
     private final Integer T = 5;
